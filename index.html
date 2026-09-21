@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Animal Emoji Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Vazirmatn:wght@400;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg1: #e6f0ff;
+      --bg2: #f3e8ff;
+      --ink: #1b2040;
+      --muted: #59608a;
+      --glass: rgba(255, 255, 255, 0.72);
+      --glass-strong: rgba(255, 255, 255, 0.9);
+      --line: rgba(27, 32, 64, 0.14);
+      --accent: #4f5bd5;
+      --accent-ink: #ffffff;
+      --shadow: 0 18px 50px rgba(50, 60, 140, 0.18);
+      --font: "Bricolage Grotesque", "Vazirmatn", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg1: #0c1533;
+        --bg2: #1d1244;
+        --ink: #eef0ff;
+        --muted: #a0a7d2;
+        --glass: rgba(22, 27, 62, 0.66);
+        --glass-strong: rgba(28, 34, 78, 0.92);
+        --line: rgba(255, 255, 255, 0.16);
+        --accent: #8d98ff;
+        --accent-ink: #0c1533;
+        --shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg1: #0c1533;
+      --bg2: #1d1244;
+      --ink: #eef0ff;
+      --muted: #a0a7d2;
+      --glass: rgba(22, 27, 62, 0.66);
+      --glass-strong: rgba(28, 34, 78, 0.92);
+      --line: rgba(255, 255, 255, 0.16);
+      --accent: #8d98ff;
+      --accent-ink: #0c1533;
+      --shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    html,
+    body {
+      margin: 0;
+    }
+
+    body {
+      min-height: 100%;
+      font-family: var(--font);
+      color: var(--ink);
+      background-color: var(--bg1);
+      background-image:
+        radial-gradient(900px 600px at 15% 10%, var(--bg2), transparent 70%),
+        radial-gradient(800px 600px at 90% 90%, var(--bg2), transparent 70%),
+        linear-gradient(160deg, var(--bg1), var(--bg1));
+      background-attachment: fixed;
+      overflow-x: hidden;
+    }
+
+    /* ---------- floating emoji sky ---------- */
+    .sky {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      z-index: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    body.searching .sky {
+      opacity: 0.16;
+    }
+
+    .drifter {
+      position: absolute;
+      font-family: var(--emoji);
+      line-height: 1;
+      padding: 4px;
+      border: 0;
+      background: none;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      animation: drift var(--dur) ease-in-out infinite alternate;
+      animation-delay: var(--delay);
+      will-change: transform;
+    }
+
+    .drifter:hover {
+      filter: drop-shadow(0 0 14px var(--accent));
+    }
+
+    @keyframes drift {
+      0% {
+        transform: translate(0, 0) rotate(var(--r0));
+      }
+
+      50% {
+        transform: translate(var(--dx), var(--dy)) rotate(var(--r1));
+      }
+
+      100% {
+        transform: translate(calc(var(--dx) * -0.7), calc(var(--dy) * 0.6)) rotate(var(--r0));
+      }
+    }
+
+    /* ---------- content ---------- */
+    .content {
+      position: relative;
+      z-index: 1;
+      min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      padding: 32px 16px 48px;
+      pointer-events: none;
+    }
+
+    .content>* {
+      pointer-events: auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 5.5vw, 3.4rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      text-align: center;
+      text-shadow: 0 2px 20px var(--bg1);
+    }
+
+    .sub {
+      margin: -8px 0 0;
+      color: var(--muted);
+      text-align: center;
+      font-size: 1.02rem;
+      max-width: 34rem;
+      text-shadow: 0 1px 12px var(--bg1);
+    }
+
+    .search {
+      width: min(640px, 100%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 8px 6px 20px;
+      border-radius: 999px;
+      background: var(--glass);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search:focus-within {
+      border-color: var(--accent);
+      box-shadow: var(--shadow), 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent);
+    }
+
+    .search .icon {
+      font-size: 1.3rem;
+      font-family: var(--emoji);
+    }
+
+    .search input {
+      flex: 1;
+      min-width: 0;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+      font: inherit;
+      font-size: 1.15rem;
+      padding: 14px 0;
+    }
+
+    .search input::placeholder {
+      color: var(--muted);
+    }
+
+    .search input::-webkit-search-cancel-button,
+    .search input::-webkit-search-decoration {
+      -webkit-appearance: none;
+      appearance: none;
+      display: none;
+    }
+
+    .clear {
+      border: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: none;
+    }
+
+    body.searching .clear {
+      display: block;
+    }
+
+    .clear:focus-visible,
+    .chip:focus-visible,
+    .item:focus-visible,
+    .drifter:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      width: min(680px, 100%);
+    }
+
+    .chip {
+      font: inherit;
+      font-size: 0.95rem;
+      color: var(--ink);
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .chip:hover {
+      border-color: var(--accent);
+    }
+
+    .chip[aria-pressed="true"] {
+      background: var(--accent);
+      color: var(--accent-ink);
+      border-color: var(--accent);
+    }
+
+    /* ---------- results stage ---------- */
+    .stage {
+      width: min(900px, 100%);
+      padding: 20px 18px 26px;
+      border-radius: 28px;
+      background: var(--glass);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: none;
+    }
+
+    body.searching .stage {
+      display: block;
+      animation: stage-in 0.35s ease-out;
+    }
+
+    @keyframes stage-in {
+      from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.98);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .stage-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 4px 14px;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .stage-head strong {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px 4px;
+    }
+
+    .item {
+      width: 92px;
+      padding: 10px 4px 8px;
+      border: 0;
+      border-radius: 18px;
+      background: transparent;
+      color: var(--ink);
+      font: inherit;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      animation: pop 0.4s cubic-bezier(.2, 1.4, .4, 1) backwards;
+      animation-delay: calc(var(--i) * 14ms);
+      transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .item:hover {
+      background: var(--glass-strong);
+    }
+
+    .item .e {
+      font-family: var(--emoji);
+      font-size: 2.6rem;
+      line-height: 1;
+      display: block;
+      animation: bob 3.6s ease-in-out infinite;
+      animation-delay: calc(var(--i) * -0.41s);
+    }
+
+    .item .n {
+      font-size: 0.74rem;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.2;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+
+    @keyframes pop {
+      from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.5);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    @keyframes bob {
+
+      0%,
+      100% {
+        transform: translateY(0) rotate(-2deg);
+      }
+
+      50% {
+        transform: translateY(-7px) rotate(2deg);
+      }
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 20px 8px 8px;
+      line-height: 1.6;
+    }
+
+    .empty .big {
+      font-size: 2.6rem;
+      font-family: var(--emoji);
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+      text-shadow: 0 1px 12px var(--bg1);
+    }
+
+    .gear {
+      position: fixed;
+      top: calc(14px + env(safe-area-inset-top, 0px));
+      right: 14px;
+      z-index: 4;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: var(--glass);
+      color: var(--ink);
+      font-size: 1.25rem;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .gear:focus-visible,
+    .panel button:focus-visible,
+    .panel input:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .panel {
+      position: fixed;
+      top: calc(66px + env(safe-area-inset-top, 0px));
+      right: 14px;
+      z-index: 4;
+      width: min(380px, calc(100vw - 28px));
+      padding: 18px;
+      border-radius: 20px;
+      background: var(--glass-strong);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: none;
+    }
+
+    .panel.open {
+      display: block;
+    }
+
+    .panel h2 {
+      margin: 0 0 4px;
+      font-size: 1.05rem;
+    }
+
+    .panel p {
+      margin: 0 0 12px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .panel label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin: 10px 0 4px;
+    }
+
+    .panel input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--glass);
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.95rem;
+    }
+
+    .panel .row {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .panel button {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--glass);
+      color: var(--ink);
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .panel button.primary {
+      background: var(--accent);
+      color: var(--accent-ink);
+      border-color: var(--accent);
+    }
+
+    .status {
+      min-height: 1.4em;
+      margin: -6px 0 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-align: center;
+      text-shadow: 0 1px 12px var(--bg1);
+    }
+
+    .status.ok {
+      color: var(--accent);
+    }
+
+    .status.warn {
+      color: #d9822b;
+    }
+
+    .grid.loading {
+      opacity: 0.4;
+      transition: opacity 0.2s;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+      transform: translate(-50%, 30px);
+      opacity: 0;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-size: 0.95rem;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 5;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .toast .em {
+      font-family: var(--emoji);
+    }
+
+    @media (max-width: 520px) {
+      .item {
+        width: 76px;
+      }
+
+      .item .e {
+        font-size: 2.2rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      .drifter,
+      .item,
+      .item .e,
+      body.searching .stage {
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sky" id="sky" aria-hidden="false"></div>
+
+  <button class="gear" id="gear" aria-label="Jev settings" aria-expanded="false">⚙️</button>
+  <div class="panel" id="panel">
+    <h2>Jev API settings</h2>
+    <p>Your key is stored only in this browser. If you run the included server.js, leave the key empty: the server adds
+      it for you.</p>
+    <label for="cfgEndpoint">Endpoint</label>
+    <input id="cfgEndpoint" type="text" autocomplete="off" spellcheck="false">
+    <label for="cfgKey">API key</label>
+    <input id="cfgKey" type="password" autocomplete="off" spellcheck="false"
+      placeholder="paste your Jev / TypeSafe key">
+    <label for="cfgModel">Model</label>
+    <input id="cfgModel" type="text" autocomplete="off" spellcheck="false">
+    <div class="row">
+      <button id="cfgReset" type="button">Reset</button>
+      <button id="cfgSave" type="button" class="primary">Save</button>
+    </div>
+  </div>
+
+  <main class="content">
+    <h1>Animal emoji finder</h1>
+    <p class="sub" id="sub">Every animal emoji is floating around this page. Ask for what you want and Jev picks the
+      matching ones.</p>
+
+    <div class="search" role="search">
+      <span class="icon" aria-hidden="true">🔎</span>
+      <input id="q" type="search" dir="auto" autocomplete="off" spellcheck="false"
+        placeholder="Try: what kind of animal do you want ?" aria-label="Search animal emojis">
+      <button class="clear" id="clear" aria-label="Clear search">✕</button>
+    </div>
+
+    <div class="status" id="status" role="status"></div>
+
+    <div class="chips" id="chips" role="group" aria-label="Quick searches"></div>
+
+    <section class="stage" id="stage" aria-live="polite">
+      <div class="stage-head"><span id="headline"></span><span>Tap an emoji to copy it</span></div>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <p class="hint" id="hint">Tap any floating emoji to copy it</p>
+  </main>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      /* emoji | English name | tags | Persian name */
+      var RAW = [
+        "🐵|monkey face|mammal wild|میمون", "🐒|monkey|mammal wild|میمون", "🦍|gorilla|mammal wild|گوریل", "🦧|orangutan|mammal wild|اورانگوتان",
+        "🐶|dog face|mammal pet|سگ", "🐕|dog|mammal pet|سگ", "🦮|guide dog|mammal pet|سگ راهنما", "🐕‍🦺|service dog|mammal pet|سگ خدمت", "🐩|poodle|mammal pet|سگ پشمالو",
+        "🐺|wolf|mammal wild|گرگ", "🦊|fox|mammal wild|روباه", "🦝|raccoon|mammal wild|راکون",
+        "🐱|cat face|mammal pet|گربه", "🐈|cat|mammal pet|گربه", "🐈‍⬛|black cat|mammal pet|گربه سیاه",
+        "🦁|lion|mammal wild|شیر", "🐯|tiger face|mammal wild|ببر", "🐅|tiger|mammal wild|ببر", "🐆|leopard|mammal wild|پلنگ",
+        "🐴|horse face|mammal farm|اسب", "🫎|moose|mammal wild|گوزن", "🫏|donkey|mammal farm|الاغ", "🐎|horse|mammal farm|اسب",
+        "🦄|unicorn|mammal fantasy|تک‌شاخ", "🦓|zebra|mammal wild|گورخر", "🦌|deer|mammal wild|آهو گوزن", "🦬|bison|mammal wild|گاومیش",
+        "🐮|cow face|mammal farm|گاو", "🐂|ox|mammal farm|گاو نر", "🐃|water buffalo|mammal farm|گاومیش", "🐄|cow|mammal farm|گاو",
+        "🐷|pig face|mammal farm|خوک", "🐖|pig|mammal farm|خوک", "🐗|boar|mammal wild|گراز", "🐽|pig nose|mammal farm|دماغ خوک",
+        "🐏|ram|mammal farm|قوچ", "🐑|sheep|mammal farm|گوسفند", "🐐|goat|mammal farm|بز",
+        "🐪|camel|mammal wild|شتر", "🐫|two hump camel|mammal wild|شتر", "🦙|llama|mammal farm|لاما",
+        "🦒|giraffe|mammal wild|زرافه", "🐘|elephant|mammal wild|فیل", "🦣|mammoth|mammal dino|ماموت", "🦏|rhino|mammal wild|کرگدن", "🦛|hippo|mammal wild|اسب آبی",
+        "🐭|mouse face|mammal pet|موش", "🐁|mouse|mammal|موش", "🐀|rat|mammal|موش صحرایی", "🐹|hamster|mammal pet|همستر",
+        "🐰|rabbit face|mammal pet|خرگوش", "🐇|rabbit|mammal pet|خرگوش",
+        "🐿️|chipmunk|mammal wild|سنجاب", "🦫|beaver|mammal wild|بیور", "🦔|hedgehog|mammal wild|جوجه تیغی", "🦇|bat|mammal wild|خفاش",
+        "🐻|bear|mammal wild|خرس", "🐻‍❄️|polar bear|mammal wild|خرس قطبی", "🐨|koala|mammal wild|کوالا", "🐼|panda|mammal wild|پاندا",
+        "🦥|sloth|mammal wild|تنبل", "🦦|otter|mammal wild sea|سمور آبی", "🦨|skunk|mammal wild|اسکانک", "🦘|kangaroo|mammal wild|کانگورو", "🦡|badger|mammal wild|گورکن",
+        "🐾|paw prints|mammal|ردپا جای پا",
+
+        "🦃|turkey|bird farm|بوقلمون", "🐔|chicken|bird farm|مرغ", "🐓|rooster|bird farm|خروس",
+        "🐣|hatching chick|bird|جوجه", "🐤|baby chick|bird|جوجه", "🐥|front facing baby chick|bird|جوجه",
+        "🐦|bird|bird wild|پرنده", "🐦‍⬛|black bird crow|bird wild|کلاغ", "🐧|penguin|bird sea wild|پنگوئن", "🕊️|dove|bird|کبوتر",
+        "🦅|eagle|bird wild|عقاب", "🦆|duck|bird farm|اردک", "🦢|swan|bird wild|قو", "🦉|owl|bird wild|جغد", "🦤|dodo|bird dino|دودو",
+        "🪶|feather|bird|پر", "🦩|flamingo|bird wild|فلامینگو", "🦚|peacock|bird wild|طاووس", "🦜|parrot|bird pet|طوطی", "🪽|wing|bird|بال", "🪿|goose|bird farm|غاز",
+
+        "🐸|frog|reptile wild|قورباغه", "🐊|crocodile|reptile wild|تمساح", "🐢|turtle|reptile pet|لاک‌پشت", "🦎|lizard|reptile wild|مارمولک", "🐍|snake|reptile wild|مار",
+        "🐲|dragon face|reptile fantasy|اژدها", "🐉|dragon|reptile fantasy|اژدها", "🦕|sauropod|reptile dino|دایناسور", "🦖|t-rex|reptile dino|دایناسور تیرکس",
+
+        "🐳|spouting whale|sea mammal|نهنگ", "🐋|whale|sea mammal|نهنگ", "🐬|dolphin|sea mammal|دلفین", "🦭|seal|sea mammal|فک",
+        "🐟|fish|sea|ماهی", "🐠|tropical fish|sea pet|ماهی", "🐡|blowfish|sea|ماهی بادکنکی", "🦈|shark|sea|کوسه",
+        "🐙|octopus|sea|هشت‌پا", "🐚|spiral shell|sea|صدف", "🪸|coral|sea|مرجان", "🪼|jellyfish|sea|عروس دریایی",
+        "🦀|crab|sea|خرچنگ", "🦞|lobster|sea|خرچنگ دراز", "🦐|shrimp|sea|میگو", "🦑|squid|sea|ماهی مرکب", "🦪|oyster|sea|صدف",
+
+        "🐌|snail|bug|حلزون", "🦋|butterfly|bug|پروانه", "🐛|caterpillar|bug|کرم پیله", "🐜|ant|bug|مورچه", "🐝|honeybee|bug|زنبور عسل",
+        "🪲|beetle|bug|سوسک", "🐞|ladybug|bug|کفشدوزک", "🦗|cricket|bug|جیرجیرک", "🪳|cockroach|bug|سوسک",
+        "🕷️|spider|bug|عنکبوت", "🕸️|spider web|bug|تار عنکبوت", "🦂|scorpion|bug|عقرب", "🦟|mosquito|bug|پشه", "🪰|fly|bug|مگس", "🪱|worm|bug|کرم"
+      ];
+
+      /* words that select a whole group (English + Persian) */
+      var TAG_WORDS = {
+        mammal: ["mammal", "پستاندار", "پستانداران"],
+        bird: ["bird", "پرنده", "پرندگان", "پرنده‌ها"],
+        reptile: ["reptile", "amphibian", "خزنده", "خزندگان", "دوزیست"],
+        sea: ["sea", "ocean", "marine", "aquatic", "underwater", "seafood", "دریا", "دریایی", "آبزی", "آبزیان"],
+        bug: ["bug", "insect", "creepy", "حشره", "حشرات"],
+        pet: ["pet", "domestic", "خانگی", "حیوان خانگی"],
+        farm: ["farm", "livestock", "مزرعه", "دامی"],
+        wild: ["wild", "wildlife", "safari", "jungle", "وحشی", "جنگل"],
+        dino: ["dinosaur", "prehistoric", "extinct", "دایناسور", "منقرض"],
+        fantasy: ["fantasy", "mythical", "myth", "magic", "افسانه", "افسانه‌ای"]
+      };
+      var ANIMAL_WORDS = ["animal", "creature", "critter", "حیوان", "حیوانات", "جانور", "جانوران"];
+      var STOP = new Set(("all the a an of every each show me give find please list only just with some any my " +
+        "emoji emojis emoticon sticker stickers icon icons is are there " +
+        "همه نشان بده بمن بهم لطفا فقط استیکر ایموجی").split(/\s+/));
+
+      /* ---------- text helpers ---------- */
+      function norm(s) {
+        return String(s).toLowerCase()
+          .replace(/[\u200c\u200d]/g, "")
+          .replace(/ي/g, "ی").replace(/ك/g, "ک").replace(/[ةۀ]/g, "ه")
+          .replace(/[\u064B-\u065F\u0670]/g, "");
+      }
+      function splitWords(s) {
+        return norm(s).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+      }
+      function stem(w) {
+        if (/^[a-z]+$/.test(w)) {
+          if (w.length > 3 && w.endsWith("s") && !w.endsWith("ss")) return w.slice(0, -1);
+          return w;
+        }
+        if (w.length > 4 && w.endsWith("ها")) return w.slice(0, -2);
+        return w;
+      }
+      function lev(a, b) {
+        var m = a.length, n = b.length;
+        if (Math.abs(m - n) > 2) return 9;
+        var prev = [], cur = [], i, j;
+        for (j = 0; j <= n; j++) prev[j] = j;
+        for (i = 1; i <= m; i++) {
+          cur[0] = i;
+          for (j = 1; j <= n; j++) {
+            cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+          }
+          prev = cur.slice();
+        }
+        return prev[n];
+      }
+      function fuzzy(t, term) {
+        if (t === term) return true;
+        if (t.length >= 4 && term.startsWith(t)) return true;
+        if (t.length >= 4) return lev(t, term) <= (t.length >= 7 ? 2 : 1);
+        return false;
+      }
+
+      /* ---------- data ---------- */
+      var ITEMS = RAW.map(function (line) {
+        var p = line.split("|");
+        var terms = new Set();
+        function add(list) { list.forEach(function (w) { splitWords(w).forEach(function (x) { terms.add(stem(x)); }); }); }
+        add([p[1]]);
+        add([p[3]]);
+        p[2].split(" ").forEach(function (tag) { add(TAG_WORDS[tag] || []); });
+        add(ANIMAL_WORDS);
+        return { e: p[0], name: p[1], fa: p[3], tags: p[2].replace(/ /g, ", "), terms: Array.from(terms) };
+      });
+
+      /* ---------- search ---------- */
+      function parseQuery(q) {
+        var groups = q.split(/\s*[,،;+&|]\s*|\s+(?:and|or|و)\s+/i).map(function (g) {
+          return splitWords(g).filter(function (w) { return !STOP.has(w); }).map(stem);
+        }).filter(function (g) { return g.length; });
+        return groups;
+      }
+      function matches(item, groups) {
+        return groups.some(function (tokens) {
+          return tokens.every(function (t) {
+            return item.terms.some(function (term) { return fuzzy(t, term); });
+          });
+        });
+      }
+      function search(q) {
+        if (!q.trim()) return { all: true, list: ITEMS };
+        var groups = parseQuery(q);
+        if (!groups.length) return { all: true, list: ITEMS };
+        return { all: false, list: ITEMS.filter(function (it) { return matches(it, groups); }) };
+      }
+
+      /* ---------- DOM ---------- */
+      var $ = function (id) { return document.getElementById(id); };
+      var sky = $("sky"), input = $("q"), grid = $("grid"), headline = $("headline");
+      var toastEl = $("toast"), toastTimer;
+
+      function toast(text) {
+        toastEl.textContent = "";
+        var em = document.createElement("span");
+        em.className = "em";
+        em.textContent = text.emoji;
+        toastEl.appendChild(em);
+        toastEl.appendChild(document.createTextNode(" " + text.msg));
+        toastEl.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 1400);
+      }
+      function copy(item) {
+        var done = function () { toast({ emoji: item.e, msg: "copied" }); };
+        var fallback = function () {
+          try {
+            var ta = document.createElement("textarea");
+            ta.value = item.e; ta.style.position = "fixed"; ta.style.opacity = "0";
+            document.body.appendChild(ta); ta.select(); document.execCommand("copy");
+            document.body.removeChild(ta); done();
+          } catch (e) { toast({ emoji: item.e, msg: item.name }); }
+        };
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(item.e).then(done, fallback);
+          } else fallback();
+        } catch (e) { fallback(); }
+      }
+
+      /* floating sky: jittered grid so emojis are spread evenly */
+      function buildSky() {
+        var w = window.innerWidth, h = window.innerHeight;
+        var n = ITEMS.length;
+        var cols = Math.max(4, Math.round(Math.sqrt(n * w / h)));
+        var rows = Math.ceil(n / cols);
+        var order = ITEMS.map(function (_, i) { return i; });
+        for (var i = order.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var t = order[i]; order[i] = order[j]; order[j] = t;
+        }
+        var small = w < 600;
+        order.forEach(function (idx, k) {
+          var it = ITEMS[idx];
+          var c = k % cols, r = Math.floor(k / cols);
+          var x = ((c + 0.15 + Math.random() * 0.7) / cols) * 100;
+          var y = ((r + 0.15 + Math.random() * 0.7) / rows) * 100;
+          var b = document.createElement("button");
+          b.className = "drifter";
+          b.type = "button";
+          b.textContent = it.e;
+          b.setAttribute("aria-label", it.name);
+          b.title = it.name;
+          var size = (small ? 26 : 32) + Math.random() * (small ? 16 : 26);
+          var s = b.style;
+          s.left = "calc(" + x.toFixed(2) + "% - " + (size / 2).toFixed(0) + "px)";
+          s.top = "calc(" + y.toFixed(2) + "% - " + (size / 2).toFixed(0) + "px)";
+          s.fontSize = size.toFixed(0) + "px";
+          s.setProperty("--dx", (Math.random() * 60 - 30).toFixed(0) + "px");
+          s.setProperty("--dy", (Math.random() * 70 - 35).toFixed(0) + "px");
+          s.setProperty("--r0", (Math.random() * 24 - 12).toFixed(0) + "deg");
+          s.setProperty("--r1", (Math.random() * 24 - 12).toFixed(0) + "deg");
+          s.setProperty("--dur", (7 + Math.random() * 9).toFixed(1) + "s");
+          s.setProperty("--delay", (-Math.random() * 12).toFixed(1) + "s");
+          b.addEventListener("click", function () { copy(it); });
+          sky.appendChild(b);
+        });
+      }
+
+      function render(res) {
+        var q = input.value;
+        var searching = q.trim().length > 0;
+        document.body.classList.toggle("searching", searching);
+        $("hint").style.display = searching ? "none" : "";
+        syncChips(q);
+        grid.classList.remove("loading");
+        if (!searching) return;
+        res = res || search(q);
+
+        grid.textContent = "";
+        if (!res.list.length) {
+          headline.textContent = "";
+          var d = document.createElement("div");
+          d.className = "empty";
+          d.innerHTML = '<span class="big">🫥</span>No animal matches “' + escapeHtml(q.trim()) +
+            '”.<br>Try a group like birds, sea, insects, pets, or a name like fox or روباه.';
+          grid.appendChild(d);
+          return;
+        }
+        var strong = document.createElement("strong");
+        strong.textContent = res.list.length + (res.list.length === 1 ? " emoji" : " emojis");
+        headline.textContent = "";
+        headline.appendChild(strong);
+        headline.appendChild(document.createTextNode((res.all ? " · every animal" : " for “" + q.trim() + "”") + (res.jev ? " · picked by Jev" : "")));
+
+        var frag = document.createDocumentFragment();
+        res.list.forEach(function (it, i) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "item";
+          b.style.setProperty("--i", i);
+          b.title = it.name + " · " + it.fa;
+          var e = document.createElement("span"); e.className = "e"; e.textContent = it.e;
+          var n = document.createElement("span"); n.className = "n"; n.textContent = it.name;
+          b.appendChild(e); b.appendChild(n);
+          b.addEventListener("click", function () { copy(it); });
+          frag.appendChild(b);
+        });
+        grid.appendChild(frag);
+      }
+      function escapeHtml(s) {
+        return s.replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+
+      /* quick chips */
+      var CHIPS = [
+        ["🐾 All animals", "all animals"], ["🐘 Mammals", "mammals"], ["🐦 Birds", "birds"],
+        ["🐬 Sea life", "sea"], ["🐞 Insects", "insects"], ["🐍 Reptiles", "reptiles"],
+        ["🐶 Pets", "pets"], ["🐄 Farm", "farm"], ["🦁 Wild", "wild"]
+      ];
+      var chipsEl = $("chips");
+      CHIPS.forEach(function (c) {
+        var b = document.createElement("button");
+        b.type = "button"; b.className = "chip"; b.textContent = c[0]; b.dataset.q = c[1];
+        b.setAttribute("aria-pressed", "false");
+        b.addEventListener("click", function () {
+          input.value = c[1];
+          runSearch(true);
+          var st = $("stage");
+          if (st.getBoundingClientRect().top > window.innerHeight * 0.7) st.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+        chipsEl.appendChild(b);
+      });
+      function syncChips(q) {
+        var cur = q.trim().toLowerCase();
+        Array.prototype.forEach.call(chipsEl.children, function (b) {
+          b.setAttribute("aria-pressed", String(b.dataset.q === cur));
+        });
+      }
+
+      /* ---------- Jev (TypeSafe System One) ---------- */
+      var IS_FILE = location.protocol === "file:";
+      var DEFAULTS = {
+        endpoint: IS_FILE ? "https://api.typesafe.ai/v1/systemone" : "/api/systemone",
+        key: "",
+        model: "jev-latest",
+        threshold: 0.5
+      };
+      var CFG = loadCfg();
+      var BATCH = 35;              // questions per request (one yes/no question per emoji)
+      var cache = new Map();
+      var ctrl = null, timer = null;
+
+      function loadCfg() {
+        var c = {};
+        try { c = JSON.parse(localStorage.getItem("jev-emoji-cfg") || "{}") || {}; } catch (e) { c = {}; }
+        return {
+          endpoint: c.endpoint || DEFAULTS.endpoint,
+          key: c.key || DEFAULTS.key,
+          model: c.model || DEFAULTS.model,
+          threshold: DEFAULTS.threshold
+        };
+      }
+      function saveCfg() {
+        try { localStorage.setItem("jev-emoji-cfg", JSON.stringify({ endpoint: CFG.endpoint, key: CFG.key, model: CFG.model })); } catch (e) { }
+      }
+      function jevReady() {
+        return !!CFG.endpoint && !(IS_FILE && !CFG.key);
+      }
+      function setStatus(text, kind) {
+        var el = $("status");
+        el.textContent = text || "";
+        el.className = "status" + (kind ? " " + kind : "");
+      }
+      function idleStatus() {
+        setStatus(jevReady() ? "" : "Using built-in search. Add your Jev API key in the ⚙️ settings to use Jev.", jevReady() ? "ok" : "");
+      }
+
+      async function callBatch(q, batch, signal) {
+        var questions = {};
+        batch.forEach(function (x) {
+          questions[x.key] = {
+            type: "noul",
+            instructions: "The state is a search request typed by someone looking for animal emojis. " +
+              "Should the emoji " + x.it.e + " (" + x.it.name + "; groups: " + x.it.tags + ") appear in the results for this request? " +
+              "Answer yes if it is a good match by name, animal group, habitat, behavior, or any attribute the request describes."
+          };
+        });
+        var headers = { "Content-Type": "application/json" };
+        if (CFG.key) headers.Authorization = "Bearer " + CFG.key;
+        var res = await fetch(CFG.endpoint, {
+          method: "POST",
+          headers: headers,
+          body: JSON.stringify({ model: CFG.model, state: "Search request: " + JSON.stringify(q), questions: questions }),
+          signal: signal
+        });
+        if (!res.ok) {
+          var t = "";
+          try { t = (await res.text()).slice(0, 140); } catch (e) { }
+          throw new Error("HTTP " + res.status + (t ? " " + t : ""));
+        }
+        var data = await res.json();
+        var ans = data.answers || {};
+        return batch.map(function (x) {
+          var a = ans[x.key];
+          return { it: x.it, idx: x.idx, p: a && typeof a.noul === "number" ? a.noul : 0 };
+        }).filter(function (h) { return h.p >= CFG.threshold; });
+      }
+
+      async function jevSearch(q, signal) {
+        var batches = [];
+        for (var i = 0; i < ITEMS.length; i += BATCH) {
+          batches.push(ITEMS.slice(i, i + BATCH).map(function (it, k) { return { it: it, idx: i + k, key: "e" + (i + k) }; }));
+        }
+        var parts = await Promise.all(batches.map(function (b) { return callBatch(q, b, signal); }));
+        var hits = [].concat.apply([], parts);
+        hits.sort(function (a, b) { return (b.p - a.p) || (a.idx - b.idx); });
+        return hits.map(function (h) { return h.it; });
+      }
+
+      async function askJev(q) {
+        if (ctrl) ctrl.abort();
+        var mine = ctrl = new AbortController();
+        try {
+          var key = CFG.endpoint + "|" + CFG.model + "|" + q.toLowerCase();
+          var list = cache.get(key);
+          if (!list) { list = await jevSearch(q, mine.signal); cache.set(key, list); }
+          if (mine.signal.aborted || input.value.trim() !== q) return;
+          render({ all: false, list: list, jev: true });
+          setStatus(list.length ? "Matched by Jev" : "Jev found no matching animals", "ok");
+        } catch (err) {
+          if (err && err.name === "AbortError") return;
+          if (input.value.trim() !== q) return;
+          render(search(q));
+          var hint = /Failed to fetch|NetworkError|Load failed/i.test(String(err && err.message))
+            ? "the browser blocked the request (use server.js or check the endpoint)" : String(err && err.message || err);
+          setStatus("Jev did not answer: " + hint + ". Showing built-in search instead.", "warn");
+        }
+      }
+
+      function runSearch(immediate) {
+        clearTimeout(timer);
+        var q = input.value.trim();
+        if (!q) { if (ctrl) ctrl.abort(); idleStatus(); render(); return; }
+        var local = search(q);
+        if (local.all || local.list.length === ITEMS.length) { if (ctrl) ctrl.abort(); local.all = true; setStatus("Showing every animal", "ok"); render(local); return; }
+        if (!jevReady()) { if (ctrl) ctrl.abort(); idleStatus(); render(local); return; }
+        document.body.classList.add("searching");
+        $("hint").style.display = "none";
+        syncChips(q);
+        grid.classList.add("loading");
+        headline.textContent = "Asking Jev…";
+        setStatus("Asking Jev…", "");
+        timer = setTimeout(function () { askJev(q); }, immediate ? 0 : 500);
+      }
+
+      input.addEventListener("input", function () { runSearch(false); });
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") runSearch(true);
+        if (e.key === "Escape") { input.value = ""; runSearch(true); }
+      });
+      $("clear").addEventListener("click", function () { input.value = ""; runSearch(true); input.focus(); });
+
+      /* settings panel */
+      var panel = $("panel"), gear = $("gear");
+      function fillPanel() {
+        $("cfgEndpoint").value = CFG.endpoint;
+        $("cfgKey").value = CFG.key;
+        $("cfgModel").value = CFG.model;
+      }
+      gear.addEventListener("click", function () {
+        var open = !panel.classList.contains("open");
+        panel.classList.toggle("open", open);
+        gear.setAttribute("aria-expanded", String(open));
+        if (open) fillPanel();
+      });
+      $("cfgSave").addEventListener("click", function () {
+        CFG.endpoint = $("cfgEndpoint").value.trim() || DEFAULTS.endpoint;
+        CFG.key = $("cfgKey").value.trim();
+        CFG.model = $("cfgModel").value.trim() || DEFAULTS.model;
+        saveCfg(); cache.clear();
+        panel.classList.remove("open"); gear.setAttribute("aria-expanded", "false");
+        input.value.trim() ? runSearch(true) : idleStatus();
+      });
+      $("cfgReset").addEventListener("click", function () {
+        CFG = { endpoint: DEFAULTS.endpoint, key: "", model: DEFAULTS.model, threshold: DEFAULTS.threshold };
+        saveCfg(); cache.clear(); fillPanel();
+      });
+
+      buildSky();
+      $("sub").textContent = "";
+      idleStatus();
+      render();
+    })();
+  </script>
+</body>
+
+</html>
