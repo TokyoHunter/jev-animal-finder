@@ -1,15 +1,51 @@
-# Animal Emoji Finder
+<h1 align="center">🦁 Animal Emoji Finder</h1>
 
-A single-page app where every animal emoji floats around the screen and a search bar sits in the middle. Type what you want in plain English, such as `birds`, `sea animals` or `animals that fly`, and the matching emojis gather in a panel below the search bar. Click any emoji to copy it.
+<p align="center">
+  Every animal emoji floating on one page. Search in plain English, let Jev AI pick the matches, and click any emoji to copy it.
+</p>
 
-Searching is powered by **Jev**, TypeSafe AI's decision model. If Jev isn't available, the page falls back to a built-in search, so it never stops working.
+## Demo
+
+<p align="center">
+  <a href="pictures/demo.mp4">▶️ <b>Watch the demo video</b></a>
+</p>
+
+<p align="center">
+  <img src="pictures/2.png" alt="Screenshot 2" width="32%">
+  <img src="pictures/3.png" alt="Screenshot 3" width="32%">
+  <img src="pictures/4.png" alt="Screenshot 4" width="32%">
+</p>
+
+## Contents
+
+- [Features](#features)
+- [What's in the box](#whats-in-the-box)
+- [Quick start](#quick-start)
+- [Using the app](#using-the-app)
+- [How the search works](#how-the-search-works)
+- [Settings](#settings)
+- [Customizing](#customizing)
+- [Publishing on GitHub and GitHub Pages](#publishing-on-github-and-github-pages)
+- [Troubleshooting](#troubleshooting)
+- [Privacy and security](#privacy-and-security)
+
+## Features
+
+- **128 animal emojis** floating around the screen, with the search bar in the middle.
+- **Plain-English search.** Ask for `birds`, `sea animals` or `animals that fly`, and the matching emojis gather in a panel below the search bar.
+- **Powered by Jev**, TypeSafe AI's decision model, with a **built-in fallback search** so the app never stops working.
+- **Click to copy.** Click any emoji, floating or in the results panel.
+- **Friendly search.** The fallback understands Persian names, ignores small typos, and combines groups with `and` or commas.
+- **Light and dark themes** that follow your system setting.
+- **Private by design.** With the included server, your API key never reaches the browser.
 
 ## What's in the box
 
 | File | What it does |
 | --- | --- |
-| `animal-emoji-finder-jev.html` | The whole app: page, styles and search logic in one file. |
+| `index.html` | The whole app: page, styles and search logic in one file. |
 | `server.js` | A tiny local server that serves the page and passes searches to Jev, keeping your API key private. |
+| `pictures/` | The demo video and screenshots shown at the top of this README. |
 | `.env` | You create this. It holds your API key (see below). It is never uploaded to GitHub. |
 | `.gitignore` | Tells git to skip `.env` and other files that shouldn't be uploaded. |
 
@@ -17,7 +53,7 @@ Searching is powered by **Jev**, TypeSafe AI's decision model. If Jev isn't avai
 
 You need [Node.js](https://nodejs.org) 18 or newer. There is nothing to install with npm.
 
-1. Put `animal-emoji-finder-jev.html` and `server.js` in the same folder.
+1. Put `index.html` and `server.js` in the same folder.
 2. In that folder, create a text file named exactly `.env` containing one line:
 
    ```
@@ -46,7 +82,7 @@ You can skip the `.env` file and set the key in your terminal instead.
 
 ### Without the server
 
-You can open `animal-emoji-finder-jev.html` directly in your browser instead. Click the ⚙️ button in the top-right corner, paste your key, and save. The key is stored only in your browser. Some browsers block direct calls to the API, and if that happens the page tells you so. In that case, use `server.js`.
+You can open `index.html` directly in your browser instead. Click the ⚙️ button in the top-right corner, paste your key, and save. The key is stored only in your browser. Some browsers block direct calls to the API, and if that happens the page tells you so. In that case, use `server.js`.
 
 Without a key, the app still works using its built-in search.
 
@@ -74,7 +110,9 @@ Searches that already match every animal, such as `all the animals`, skip Jev an
 
 Jev is priced per input token. A typical search sends roughly 10,000 tokens, which at the published rate of about $0.042 per million tokens is a small fraction of a cent. Check TypeSafe's current pricing and access rules for your account.
 
-## Settings (⚙️)
+## Settings
+
+Click the ⚙️ button in the top-right corner of the page.
 
 | Setting | Default | Notes |
 | --- | --- | --- |
@@ -86,7 +124,7 @@ Jev is priced per input token. A typical search sends roughly 10,000 tokens, whi
 
 ## Customizing
 
-Everything is in the `<script>` section of the HTML file.
+Everything is in the `<script>` section of `index.html`.
 
 - **Add or edit emojis:** find the `RAW` list. Each line is `emoji|English name|tags|Persian name`, for example `🦁|lion|mammal wild|شیر`.
 - **Match sensitivity:** change `threshold` in `DEFAULTS` (default `0.5`). Raise it for stricter results, lower it for more.
@@ -95,29 +133,48 @@ Everything is in the `<script>` section of the HTML file.
 
 ## Publishing on GitHub and GitHub Pages
 
-1. Rename `animal-emoji-finder-jev.html` to `index.html` (GitHub Pages looks for that name).
-2. Keep the `.gitignore` file in the folder. It tells git to skip `.env`, so your key is never uploaded.
-3. Create a new repository on GitHub, then in your project folder run:
+### 1. Put the project on GitHub
+
+1. Make sure your folder contains `index.html`, `server.js`, `README.md`, `.gitignore` and the `pictures` folder. Do not add your `.env` file to the repository: `.gitignore` already tells git to skip it.
+2. Create a new repository on [github.com](https://github.com/new). Make it **Public**, and leave "Add a README" unchecked.
+3. In your project folder, run:
 
    ```
    git init
    git add .
    git status
+   ```
+
+   Check that `.env` is **not** in the list.
+4. Then run:
+
+   ```
    git commit -m "Animal emoji finder"
    git branch -M main
    git remote add origin https://github.com/YOUR-USERNAME/YOUR-REPO.git
    git push -u origin main
    ```
 
-   Check that `.env` is **not** listed by `git status` before you commit.
-4. On GitHub, open **Settings > Pages**, set the source to **Deploy from a branch**, choose `main` and `/ (root)`, and save. After a minute your site is live at `https://YOUR-USERNAME.github.io/YOUR-REPO/`.
+### 2. Turn on GitHub Pages
 
-GitHub Pages only hosts static files, so `server.js` does not run there. The published page works like this:
+1. Open your repository on GitHub and click **Settings**.
+2. In the left sidebar, click **Pages**.
+3. Under **Build and deployment**, set **Source** to **Deploy from a branch**.
+4. Under **Branch**, choose **main** and the **/ (root)** folder, then click **Save**.
+5. Wait one to two minutes. Refresh the Pages settings screen and a banner appears with your link:
+   `https://YOUR-USERNAME.github.io/YOUR-REPO/`
+6. To update the site later, commit and push your changes. Pages redeploys automatically.
 
-- It starts with the built-in search, which needs no key.
+GitHub Pages is free for public repositories. Private repositories need a paid GitHub plan.
+
+### What to expect on the published site
+
+GitHub Pages only hosts static files, so `server.js` does not run there.
+
+- The page starts with the built-in search, which needs no key.
 - Each visitor can click ⚙️ and paste their own Jev key to switch on Jev search. The key stays in that visitor's browser.
-- Your key is never in the files, so it can't leak from the repository.
-- Jev may refuse requests made directly from a browser page (a browser security rule called CORS). If it does, the page shows a warning and keeps using the built-in search. To use Jev on a public site you need a small proxy that holds your key, for example a serverless function on Netlify, Vercel or Cloudflare.
+- Your key is never in the files, so it cannot leak from the repository.
+- Jev may refuse requests made directly from a browser page (a browser security rule called CORS). If it does, the page shows a warning and keeps using the built-in search. To use Jev on a public site for everyone, you need a small proxy that holds your key, for example a serverless function on Netlify, Vercel or Cloudflare.
 
 If you ever commit your key by mistake, deleting it in a later commit is not enough because it stays in the history. Create a new key in your TypeSafe dashboard and delete the old one.
 
@@ -132,6 +189,7 @@ If you ever commit your key by mistake, deleting it in a later commit is not eno
 | `HTTP 429` | You hit a rate limit. Wait a moment and try again. |
 | "Using built-in search" | No key is set. Add one in `.env` or in ⚙️ settings. |
 | Some emojis show as empty boxes | Your system's emoji font is older than those emojis. Updating your OS fixes it. |
+| Images or video don't show on GitHub | Check the paths use forward slashes (`pictures/2.png`, not `.\pictures\2.png`) and that the `pictures` folder was committed. |
 
 ## Privacy and security
 
