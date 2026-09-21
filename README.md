@@ -7,8 +7,9 @@
 ## Demo
 
 <p align="center">
-  <video src="./pictures/demo.mp4" width="100%" controls autoplay loop muted playsinline></video>
+  <video src="pictures/demo.mp4" width="100%" controls autoplay loop muted playsinline></video>
 </p>
+
 
 
 <p align="center">
