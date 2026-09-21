@@ -7,8 +7,9 @@
 ## Demo
 
 <p align="center">
-  <video src="https://github.com/TokyoHunter/jev-animal-finder/raw/master/pictures/demo.mp4" width="100%" controls autoplay loop muted playsinline></video>
+  <video src="https://github.com/TokyoHunter/jev-animal-finder/raw/master/pictures/demo.gif" width="100%" controls autoplay loop muted playsinline></video>
 </p>
+
 
 
 
