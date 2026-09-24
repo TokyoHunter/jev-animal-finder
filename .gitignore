@@ -1,8 +1,5 @@
-# Never commit your API key
 .env
 .env.*
-
-# Node / OS clutter
 node_modules/
 .DS_Store
 Thumbs.db
